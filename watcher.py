@@ -15,6 +15,7 @@ from pytz import timezone
 import io
 from time import perf_counter
 import pytz
+import colorsys
 
 # observatory at Calar Alto
 vidurl = "http://150.214.222.103/mjpg/video.mjpg"
@@ -37,6 +38,7 @@ def dimensions():
     r = requests.get(vidurl, stream=True)
     if(r.status_code == 200):
         try:
+
             bytes=b''
             for chunk in r.iter_content(chunk_size=1024):
                 bytes += chunk
@@ -65,7 +67,7 @@ def colorSort(img, self):
     imd = img.resize(self.dim, resample=0)
     im = np.array(imd)
     np.shape(im)
-    im = im.reshape((h*w,3))
+    im = im.reshape((self.dim[0]*self.dim[1],3))
     imList = im.tolist()
     imList.sort(key=lambda rgb: step(*rgb,8) )
     imsort = np.array(imList)
@@ -101,7 +103,7 @@ def colorSort(img, self):
     im = None
     imsorted = None
 
- def paint(self):
+def paint(self):
 #     abs_file_path = filename()
     r = requests.get(vidurl, stream=True)
     if(r.status_code == 200):
@@ -116,8 +118,8 @@ def colorSort(img, self):
                     bytes = bytes[findb+2:]
                     image = Image.open(io.BytesIO(jpg))
                     colorSort(image, self)
-                # need to set this to a better value
-                    tm.sleep(1)
+                    # need to set this to a better value
+                    time.sleep(1)
                     if uktz.localize(datetime.now()) > self.end:
                         return
         except:
@@ -184,7 +186,8 @@ class picture:
         self.dim = dim
 
 while True:
-    if uktz.localize(datetime.now()) > dates[1][0]:
+    print("go")
+    if uktz.localize(datetime.now()) > dates[1][1]:
         break
     for date in dates:
         if date[0] < uktz.localize(datetime.now()) < date[1]:
