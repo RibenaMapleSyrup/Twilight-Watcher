@@ -3,7 +3,7 @@ import requests
 import os
 import urllib.request
 from bs4 import BeautifulSoup
-import ffmpeg
+#import ffmpeg
 import shutil
 from pathlib import Path
 import numpy as np
@@ -19,6 +19,8 @@ import colorsys
 
 # observatory at Calar Alto
 vidurl = "http://150.214.222.103/mjpg/video.mjpg"
+# London
+#vidurl = "http://167.98.130.231:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER"
 
 res = 2000
 C = int(math.pi*res)
@@ -48,7 +50,11 @@ def dimensions():
                     jpg = bytes[finda:findb+2]
                     bytes = bytes[findb+2:]
                     image = Image.open(io.BytesIO(jpg))
-
+                    left = 0
+                    top = 25
+                    right = image.size[0]
+                    bottom = image.size[1]
+                    image = image.crop((left, top, right, bottom))
                     w, h = image.size
                     print(image.size)
                     height = int(math.sqrt((res*h)/(w)))
@@ -84,7 +90,7 @@ def colorSort(img, self):
     # else: keep on adding to whatever abs_file_path
         data = imageio.imread(abs_file_path)
         print(np.shape(data)[0])
-        if np.shape(data)[0] > 500:
+        if np.shape(data)[0] > 100:
             print("this")
             length = str(len([name for name in os.listdir(self.path) if self.day in name]))
             file = self.path + '/' + self.day + '_' + length + ".png"
@@ -107,30 +113,36 @@ def paint(self):
 #     abs_file_path = filename()
     r = requests.get(vidurl, stream=True)
     if(r.status_code == 200):
-        try:
-            bytes=b''
-            for chunk in r.iter_content(chunk_size=1024):
-                bytes += chunk
-                finda = bytes.find(b'\xff\xd8')
-                findb = bytes.find(b'\xff\xd9')
-                if finda != -1 and findb != -1:
-                    jpg = bytes[finda:findb+2]
-                    bytes = bytes[findb+2:]
-                    image = Image.open(io.BytesIO(jpg))
-                    colorSort(image, self)
+        while True:
+            try:
+                bytes=b''
+                for chunk in r.iter_content(chunk_size=1024):
+                    bytes += chunk
+                    finda = bytes.find(b'\xff\xd8')
+                    findb = bytes.find(b'\xff\xd9')
+                    if finda != -1 and findb != -1:
+                        jpg = bytes[finda:findb+2]
+                        bytes = bytes[findb+2:]
+                        image = Image.open(io.BytesIO(jpg))
+                        left = 0
+                        top = 25
+                        right = image.size[0]
+                        bottom = image.size[1]
+                        image = image.crop((left, top, right, bottom))
+                        colorSort(image, self)
                     # need to set this to a better value
-                    time.sleep(1)
-                    if uktz.localize(datetime.now()) > self.end:
-                        return
-        except:
-            print("error")
+                        time.sleep(1)
+                        if uktz.localize(datetime.now()) > self.end:
+                            return
+            except:
+                print("error")
 
 def folder():
     now = datetime.now()
     if now.hour < 12:
-        sun = "dusk"
-    else:
         sun = "dawn"
+    else:
+        sun = "dusk"
     day = str(now.year) + str(now.month) + str(now.day)
     path = Path.cwd()
     rel_path = day + sun
@@ -152,11 +164,11 @@ def update(self):
 uktz=pytz.timezone('Europe/London')
 estz=pytz.timezone('Europe/Madrid')
 
-sunset = datetime(2020, 6, 7, 20, 50, 0)
-night = datetime(2020, 6, 7, 23, 17, 0)
+sunset = datetime(2020, 6, 11, 20, 51, 0)
+night = datetime(2020, 6, 11, 23, 19, 0)
 
-sunrise = datetime(2020, 6, 8, 4, 59, 0)
-morning = datetime(2020, 6, 8, 7, 27, 0)
+sunrise = datetime(2020, 6, 12, 4, 58, 0)
+morning = datetime(2020, 6, 12, 7, 27, 0)
 # sunrise = datetime.datetime(2020, 6, 7, 4, 59, 0)
 # morning = datetime.datetime(2020, 6, 7, 7, 29, 0)
 # y = datetime.datetime.now()
@@ -171,7 +183,8 @@ morning = estz.localize(morning)
 # sunrise = uktz.localize(sunrise)
 # morning = uktz.localize(morning)
 
-dates = [[sunrise, morning], [sunset, night]]
+#dates = [[sunrise, morning], [sunset, night]]
+dates = [[sunset, night],[sunrise, morning]]
 
 class picture:
     # class attributes
@@ -195,5 +208,6 @@ while True:
             dim = dimensions()
             pic = picture(path, day, 0, date[0], date[1], dim)
             paint(pic)
+            # sometimes this is erroring and going back to beginning
     print("wait")
     time.sleep(15)
