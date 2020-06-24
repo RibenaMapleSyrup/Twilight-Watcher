@@ -19,8 +19,7 @@ import colorsys
 
 # observatory at Calar Alto
 vidurl = "http://150.214.222.103/mjpg/video.mjpg"
-# London
-#vidurl = "http://167.98.130.231:8080/cgi-bin/faststream.jpg?stream=half&fps=15&rand=COUNTER"
+
 
 res = 2000
 C = int(math.pi*res)
